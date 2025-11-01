@@ -2,3 +2,7 @@ ipython>=8.10
 jupyterlab>=3.0
 notebook
 kedro~=1.0.0
+pandas>=1.5
+scikit-learn>=1.0
+pyarrow>=12.0
+kedro-datasets[pandas,pickle,json]>=1.8
