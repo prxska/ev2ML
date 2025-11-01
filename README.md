@@ -1,101 +1,127 @@
-# evaluacion_2_mlops
+# Evaluación 2: MLOps - Pipelines de Clasificación y Regresión
 
-[![Powered by Kedro](https://img.shields.io/badge/powered_by-kedro-ffc900?logo=kedro)](https://kedro.org)
+Este proyecto implementa un pipeline de MLOps completo utilizando Kedro, DVC y Docker para entrenar y evaluar 10 modelos de Machine Learning (5 de clasificación y 5 de regresión) basados en un conjunto de datos de compras de clientes.
 
-## Overview
+**Integrantes:**
+* Jorge Garrido
 
-This is your new Kedro project, which was generated using `kedro 1.0.0`.
+---
 
-Take a look at the [Kedro documentation](https://docs.kedro.org) to get started.
+## 1. Problemas de Negocio
 
-## Rules and guidelines
+El pipeline resuelve dos problemas de ML:
 
-In order to get the best out of the template:
+1.  **Clasificación:** Predecir la **categoría** de un producto (`category`) basado en el perfil del cliente y la tienda.
+2.  **Regresión:** Predecir el **monto total** de una transacción (`total_amount`) basado en el mismo perfil.
 
-* Don't remove any lines from the `.gitignore` file we provide
-* Make sure your results can be reproduced by following a data engineering convention
-* Don't commit data to your repository
-* Don't commit any credentials or your local configuration to your repository. Keep all your credentials and local configuration in `conf/local/`
+---
 
-## How to install dependencies
+## 2. Arquitectura de la Solución (MLOps)
 
-Declare any dependencies in `requirements.txt` for `pip` installation.
+El proyecto está construido con un stack de MLOps moderno:
 
-To install them, run:
+* **Kedro:** Para estructurar todo el proyecto en pipelines de datos e ingeniería de ML modulares, robustos y reproducibles.
+* **DVC (Data Version Control):** Para versionar nuestros artefactos (datos crudos, modelos entrenados y métricas), manteniendo el repositorio de Git liviano.
+* **Docker:** Para empaquetar toda la aplicación (código, librerías y configuración) en una imagen portable que garantiza una ejecución idéntica en cualquier máquina.
 
-```
-pip install -r requirements.txt
-```
+---
 
-## How to run your Kedro pipeline
+## 3. Estructura del Proyecto
 
-You can run your Kedro project with:
+* `data/01_raw/`: Datos crudos (rastreados por DVC).
+* `data/06_models/`: 10 modelos `.pkl` entrenados (rastreados por DVC).
+* `data/07_model_output/`: 10 archivos `.json` con las métricas de desempeño (rastreados por DVC).
+* `src/evaluacion_2_mlops/nodes/`: Contiene la lógica en Python (nodos):
+    * `preprocessing.py`: Funciones para unir CSVs y crear features.
+    * `modeling.py`: Funciones para entrenar y evaluar los 10 modelos con `GridSearchCV` (cv=5).
+* `src/evaluacion_2_mlops/pipelines/`: Contiene la definición de los pipelines que conectan los nodos.
+* `conf/base/catalog.yml`: El "registro" que le dice a Kedro dónde encontrar y guardar todos los datos, modelos y métricas.
+* `Dockerfile`: Las instrucciones para construir la imagen de Docker.
 
-```
-kedro run
-```
+---
 
-## How to test your Kedro project
+## 4. Instrucciones de Ejecución
 
-Have a look at the file `tests/test_run.py` for instructions on how to write your tests. You can run your tests as follows:
+Hay dos maneras de ejecutar este proyecto.
 
-```
-pytest
-```
+### Opción A: Ejecución con Docker (Recomendada)
 
-You can configure the coverage threshold in your project's `pyproject.toml` file under the `[tool.coverage.report]` section.
+Este método es el más simple y garantiza la reproducibilidad.
 
+**Prerrequisitos:**
+* Tener **Docker Desktop** instalado y corriendo.
 
-## Project dependencies
+**Pasos:**
+1.  Clonar el repositorio.
+2.  Construir la imagen de Docker (solo la primera vez):
+    ```bash
+    docker build -t evaluacion-mlops .
+    ```
+3.  Ejecutar el pipeline completo:
+    ```bash
+    docker run --rm evaluacion-mlops kedro run
+    ```
+    Esto ejecutará el pipeline `__default__`, que procesa los datos, entrena los 10 modelos y guarda todas las métricas.
 
-To see and update the dependency requirements for your project use `requirements.txt`. You can install the project requirements with `pip install -r requirements.txt`.
+### Opción B: Ejecución Local (Desarrollo)
 
-[Further information about project dependencies](https://docs.kedro.org/en/stable/kedro_project_setup/dependencies.html#project-specific-dependencies)
+**Prerrequisitos:**
+* Tener `Python 3.9` instalado.
+* Tener `git` y `dvc` instalados.
 
-## How to work with Kedro and notebooks
+**Pasos:**
+1.  Clonar el repositorio.
+2.  Crear y activar un entorno virtual:
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # o .\venv\Scripts\activate en Windows
+    ```
+3.  Instalar las dependencias:
+    ```bash
+    pip install -r src/requirements.txt
+    ```
+4.  Recuperar los datos (rastreados por DVC):
+    ```bash
+    # (En un proyecto real, se correría 'dvc pull'. 
+    # Para esta entrega, los datos crudos ya están en la carpeta)
+    ```
+5.  Ejecutar el pipeline de Kedro:
+    ```bash
+    kedro run
+    ```
 
-> Note: Using `kedro jupyter` or `kedro ipython` to run your notebook provides these variables in scope: `context`, 'session', `catalog`, and `pipelines`.
->
-> Jupyter, JupyterLab, and IPython are already included in the project requirements by default, so once you have run `pip install -r requirements.txt` you will not need to take any extra steps before you use them.
+---
 
-### Jupyter
-To use Jupyter notebooks in your Kedro project, you need to install Jupyter:
+## 5. Resultados y Discusión
 
-```
-pip install jupyter
-```
+Se entrenaron 10 modelos (5 por cada tarea) utilizando `GridSearchCV` con `cv=5`. Los resultados de las métricas en el set de prueba son los siguientes.
 
-After installing Jupyter, you can start a local notebook server:
+### Tabla de Modelos de Clasificación (Target: `category`)
 
-```
-kedro jupyter notebook
-```
+| Modelo | Accuracy (↑) | F1-Score (weighted) (↑) |
+| :--- | :--- | :--- |
+| **Logistic Regression** | **0.308** | 0.258 |
+| **Random Forest** | 0.303 | 0.239 |
+| **KNN** | 0.262 | **0.261** |
+| **SVC (Linear)** | 0.306 | 0.214 |
+| **Gradient Boosting** | 0.297 | 0.250 |
 
-### JupyterLab
-To use JupyterLab, you need to install it:
+### Tabla de Modelos de Regresión (Target: `total_amount`)
 
-```
-pip install jupyterlab
-```
+| Modelo | RMSE (↓) | R² Score (↑) |
+| :--- | :--- | :--- |
+| **Linear Regression** | **58.45** | **-0.0063** |
+| **Random Forest** | 58.46 | -0.0064 |
+| **KNN** | 62.76 | -0.1601 |
+| **SVR (Linear)** | 60.10 | -0.0639 |
+| **Gradient Boosting** | 58.50 | -0.0079 |
 
-You can also start JupyterLab:
+### Discusión y Conclusiones
 
-```
-kedro jupyter lab
-```
+Los resultados de la experimentación demuestran que los modelos tienen un rendimiento muy bajo en ambas tareas.
 
-### IPython
-And if you want to run an IPython session:
+* **Clasificación:** El rendimiento es pobre. El mejor modelo (Regresión Logística) apenas alcanza un **Accuracy del 30.8%**, y el mejor F1-Score (KNN) es de solo **0.261**. Esto indica que los *features* seleccionados (como `gender`, `city`, `state`, `brand`) no son buenos predictores para la `category` de un producto.
 
-```
-kedro ipython
-```
+* **Regresión:** El rendimiento es extremadamente malo. Un `R² Score` negativo (presente en todos los modelos) significa que **todos nuestros modelos son peores que simplemente predecir el promedio** del `total_amount` para cada compra.
 
-### How to ignore notebook output cells in `git`
-To automatically strip out all output cell contents before committing to `git`, you can use tools like [`nbstripout`](https://github.com/kynan/nbstripout). For example, you can add a hook in `.git/config` with `nbstripout --install`. This will run `nbstripout` before anything is committed to `git`.
-
-> *Note:* Your output cells will be retained locally.
-
-## Package your Kedro project
-
-[Further information about building project documentation and packaging your project](https://docs.kedro.org/en/stable/tutorial/package_a_project.html)
+**Conclusión Final:** Se concluye que, con el *feature engineering* actual, **no es posible predecir `category` o `total_amount` de forma fiable**. Para un próximo ciclo de desarrollo, es fundamental realizar un trabajo de *feature engineering* mucho más profundo, como extraer información de las fechas (mes, año), calcular el gasto histórico del cliente, o crear *features* basados en la frecuencia de compra, para poder construir un modelo predictivo útil.
