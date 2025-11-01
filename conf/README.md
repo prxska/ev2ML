@@ -3,7 +3,7 @@
 Este proyecto implementa un pipeline de MLOps completo utilizando Kedro, DVC y Docker para entrenar y evaluar 10 modelos de Machine Learning (5 de clasificación y 5 de regresión) basados en un conjunto de datos de compras de clientes.
 
 **Integrantes:**
-Jorge Garrido
+* Jorge Garrido
 
 ---
 
@@ -89,3 +89,39 @@ Este método es el más simple y garantiza la reproducibilidad.
     ```bash
     kedro run
     ```
+
+---
+
+## 5. Resultados y Discusión
+
+Se entrenaron 10 modelos (5 por cada tarea) utilizando `GridSearchCV` con `cv=5`. Los resultados de las métricas en el set de prueba son los siguientes.
+
+### Tabla de Modelos de Clasificación (Target: `category`)
+
+| Modelo | Accuracy (↑) | F1-Score (weighted) (↑) |
+| :--- | :--- | :--- |
+| **Logistic Regression** | **0.308** | 0.258 |
+| **Random Forest** | 0.303 | 0.239 |
+| **KNN** | 0.262 | **0.261** |
+| **SVC (Linear)** | 0.306 | 0.214 |
+| **Gradient Boosting** | 0.297 | 0.250 |
+
+### Tabla de Modelos de Regresión (Target: `total_amount`)
+
+| Modelo | RMSE (↓) | R² Score (↑) |
+| :--- | :--- | :--- |
+| **Linear Regression** | **58.45** | **-0.0063** |
+| **Random Forest** | 58.46 | -0.0064 |
+| **KNN** | 62.76 | -0.1601 |
+| **SVR (Linear)** | 60.10 | -0.0639 |
+| **Gradient Boosting** | 58.50 | -0.0079 |
+
+### Discusión y Conclusiones
+
+Los resultados de la experimentación demuestran que los modelos tienen un rendimiento muy bajo en ambas tareas.
+
+* **Clasificación:** El rendimiento es pobre. El mejor modelo (Regresión Logística) apenas alcanza un **Accuracy del 30.8%**, y el mejor F1-Score (KNN) es de solo **0.261**. Esto indica que los *features* seleccionados (como `gender`, `city`, `state`, `brand`) no son buenos predictores para la `category` de un producto.
+
+* **Regresión:** El rendimiento es extremadamente malo. Un `R² Score` negativo (presente en todos los modelos) significa que **todos nuestros modelos son peores que simplemente predecir el promedio** del `total_amount` para cada compra.
+
+**Conclusión Final:** Se concluye que, con el *feature engineering* actual, **no es posible predecir `category` o `total_amount` de forma fiable**. Para un próximo ciclo de desarrollo, es fundamental realizar un trabajo de *feature engineering* mucho más profundo, como extraer información de las fechas (mes, año), calcular el gasto histórico del cliente, o crear *features* basados en la frecuencia de compra, para poder construir un modelo predictivo útil.
