@@ -78,7 +78,7 @@ Este método es el más simple y garantiza la reproducibilidad.
     ```
 3.  Instalar las dependencias:
     ```bash
-    pip install -r src/requirements.txt
+    pip install -r requirements.txt
     ```
 4.  Recuperar los datos (rastreados por DVC):
     ```bash
